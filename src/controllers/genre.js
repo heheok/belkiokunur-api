@@ -30,7 +30,7 @@ export const getGenre = (req, h) => {
 export const createGenre = (req, h) => {
   const genreData = {
     name: req.payload.name,
-    slug: slug(req.payload.name, { symbols: false })
+    slug: slug(req.payload.name, { symbols: false, lower: true })
   };
 
   return Genre.create(genreData)
@@ -48,6 +48,7 @@ export const updateGenre = (req, h) => {
     .then(genre => {
       if (!genre) return ErrorResponse('Genre not found', 404);
       genre.name = req.payload.name;
+      genre.slug = slug(req.payload.name, { symbols: false, lower: true });
       genre.save(genre);
     })
     .then(data => {
@@ -58,16 +59,17 @@ export const updateGenre = (req, h) => {
     });
 };
 
-export const removeGenre = (req, h) => {
-  return Genre.findOne({ slug: req.params.slug }).exec(function(err, genre) {
-    if (err)
-      return ErrorResponse('Internal Server Error, couldnt find genre', 404);
-    if (!genre) return ErrorResponse('Genre not found', 404);
-
-    genre.remove(function(err) {
-      if (err)
+export const removeGenre = async (req, h) => {
+  return Genre.findOneAndRemove({ slug: req.params.slug })
+    .exec()
+    .then(genre => {
+      if (!genre) return ErrorResponse('Genre not found', 404);
+      genre.remove().then().catch(err => {
         return ErrorResponse('Internal Server Error, couldnt find genre', 404);
+      });
       return SuccessResponse(null, 'Genre removed successfully');
+    })
+    .catch(err => {
+      return ErrorResponse('Internal Server Error, couldnt find genre', 404);
     });
-  });
 };

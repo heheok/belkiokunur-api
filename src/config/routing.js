@@ -12,6 +12,13 @@ import {
   updateGenre,
   removeGenre
 } from '../controllers/genre';
+import {
+  listArticle,
+  getArticle,
+  createArticle,
+  updateArticle,
+  removeArticle
+} from '../controllers/article';
 import { login, logout } from '../controllers/authentication';
 
 const Routes = {
@@ -44,7 +51,20 @@ const Routes = {
     genre: {
       method: 'GET',
       path: '/genre/{slug}',
-      handler: listGenre
+      handler: getGenre
+    },
+
+    /*  Article Related */
+
+    articles: {
+      method: 'GET',
+      path: '/articles',
+      handler: listArticle
+    },
+    article: {
+      method: 'GET',
+      path: '/article/{slug}',
+      handler: getArticle
     }
   },
   privateRoutes: {
@@ -65,6 +85,11 @@ const Routes = {
       handler: removeAuthor
     },
     // GENRE RELATED
+    createGenre: {
+      method: 'POST',
+      path: '/genre',
+      handler: createGenre
+    },
     updateGenre: {
       method: 'PUT',
       path: '/genre/{slug}',
@@ -74,6 +99,24 @@ const Routes = {
       method: 'DELETE',
       path: '/genre/{slug}',
       handler: removeGenre
+    },
+
+    /*  Article Related */
+
+    createArticle: {
+      method: 'POST',
+      path: '/article',
+      handler: createArticle
+    },
+    updateArticle: {
+      method: 'PUT',
+      path: '/article/{slug}',
+      handler: updateArticle
+    },
+    deleteArticle: {
+      method: 'DELETE',
+      path: '/article/{slug}',
+      handler: removeArticle
     }
   }
 };
