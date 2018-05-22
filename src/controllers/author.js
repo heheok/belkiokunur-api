@@ -1,38 +1,44 @@
 import Author from '../models/author';
 import bcrypt from 'bcrypt';
+import { expireUser } from './authentication';
+import { SuccessResponse, ErrorResponse } from '../handlers/reponseHandler';
 
 export const listAuthor = (req, h) => {
   return Author.find({})
     .exec()
     .then(authors => {
-      return {
+      return SuccessResponse({
         authors: authors.map(author => {
           return {
-            _id: author._id,
             username: author.username,
             fullname: author.fullname,
             summary: author.summary
           };
         })
-      };
+      });
     })
     .catch(err => {
-      return { err: err };
+      return ErrorResponse(err, 500);
     });
 };
 
 export const getAuthor = (req, h) => {
-  return Author.findById(req.params.id).exec().then(author => {
-    if (!author) return { message: 'Author not found' };
-    return {
-      author: {
-        _id: author._id,
-        username: author.username,
-        fullname: author.fullname,
-        summary: author.summary
-      }
-    };
-  });
+  return Author.findOne({ username: req.params.username })
+    .exec()
+    .then(author => {
+      if (!author) return ErrorResponse('Author not found', 404);
+      return SuccessResponse({
+        author: {
+          _id: author._id,
+          username: author.username,
+          fullname: author.fullname,
+          summary: author.summary
+        }
+      });
+    })
+    .catch(err => {
+      return ErrorResponse('Author not found', 404);
+    });
 };
 
 export const createAuthor = (req, h) => {
@@ -50,44 +56,47 @@ export const createAuthor = (req, h) => {
   return Author.create(authorData)
     .then(author => {
       const { username, fullname, summary } = author;
-      return {
-        message: 'Author created successfully',
-        author: { username, fullname, summary }
-      };
+      return SuccessResponse(
+        { author: { username, fullname, summary } },
+        'Created Succesfully'
+      );
     })
     .catch(err => {
-      return { err: err };
+      return ErrorResponse(err, 500);
     });
 };
 
 export const updateAuthor = (req, h) => {
-  return Author.findById(req.params.id)
+  return Author.findOne({ username: req.params.username })
     .exec()
     .then(author => {
-      if (!author) return { err: 'Author not found' };
-
-      (author.username = req.payload.username), (author.fullname =
-        req.payload.fullname), (author.password =
-        req.payload.password), (author.summary =
-        req.payload.summary), author.save(author);
+      if (!author) return ErrorResponse('Author not found', 404);
+      if (req.payload.username) author.username = req.payload.username;
+      if (req.payload.fullname) author.fullname = req.payload.fullname;
+      if (req.payload.password) author.password = req.payload.password;
+      if (req.payload.summary) author.summary = req.payload.summary;
+      author.save(author);
     })
     .then(data => {
-      return { message: 'Author data updated successfully' };
+      return SuccessResponse(null, 'Author data updated successfully');
     })
     .catch(err => {
-      return { err: err };
+      return ErrorResponse(err, 500);
     });
 };
 
-export const removeAuthor = (req, h) => {
-  return Author.findById(req.params.id).exec(function(err, author) {
-    if (err) return { dberror: err };
-    if (!author) return { message: 'Author not found' };
-
-    author.remove(function(err) {
-      if (err) return { dberror: err };
-
-      return { success: true };
+export const removeAuthor = async (req, h) => {
+  return Author.findOneAndRemove({ username: req.params.username })
+    .exec()
+    .then(author => {
+      if (!author) return ErrorResponse('Author not found', 404);
+      expireUser(author.id);
+      author.remove().then().catch(err => {
+        return ErrorResponse('Internal Server Error, couldnt find author', 404);
+      });
+      return SuccessResponse(null, 'Author removed successfully');
+    })
+    .catch(err => {
+      return ErrorResponse('Internal Server Error, couldnt find author', 404);
     });
-  });
 };

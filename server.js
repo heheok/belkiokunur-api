@@ -1,27 +1,8 @@
 import Hapi from 'hapi';
 import mongoose from 'mongoose';
 import { redisGetAsync } from './src/services/redis';
-import { JWT_SECRET } from './src/config/config';
-const MongoDBUrl = 'mongodb://localhost:27017/saltokunur';
-const TEMPORARY_SECRET = 'temporarysecret';
-
-const redisOptions = {
-  connection: {
-    host: 'localhost',
-    opts: {
-      parser: 'javascript'
-    }
-  }
-};
-
-import {
-  listAuthor,
-  getAuthor,
-  createAuthor,
-  updateAuthor,
-  removeAuthor
-} from './src/controllers/author';
-import { login } from './src/controllers/authentication';
+import { JWT_SECRET, MONGODB_URL } from './src/config/config';
+import Routes from './src/config/routing';
 
 const server = new Hapi.Server({
   host: 'localhost',
@@ -46,46 +27,27 @@ const validate = async function(decodedToken, request) {
       verifyOptions: { algorithms: ['HS256'] }
     });
     server.auth.default('jwt');
-    server.route({
-      method: 'POST',
-      path: '/login',
-      config: { auth: false },
-      handler: login
+
+    /* ROUTING */
+    const { publicRoutes, privateRoutes } = Routes;
+
+    Object.keys(publicRoutes).map(route => {
+      server.route({
+        ...publicRoutes[route],
+        config: { auth: false }
+      });
     });
 
-    server.route({
-      method: 'GET',
-      path: '/authors',
-      config: { auth: 'jwt' },
-      handler: listAuthor
-    });
-
-    server.route({
-      method: 'GET',
-      path: '/authors/{id}',
-      handler: getAuthor
-    });
-    server.route({
-      method: 'POST',
-      path: '/authors',
-      handler: createAuthor
-    });
-
-    server.route({
-      method: 'PUT',
-      path: '/authors/{id}',
-      handler: updateAuthor
-    });
-
-    server.route({
-      method: 'DELETE',
-      path: '/authors/{id}',
-      handler: removeAuthor
+    Object.keys(privateRoutes).map(route => {
+      server.route({
+        ...privateRoutes[route],
+        config: { auth: 'jwt' }
+      });
     });
 
     await server.start();
-    // Once started, connect to Mongo through Mongoose
-    mongoose.connect(MongoDBUrl, {}).then(
+
+    mongoose.connect(MONGODB_URL, {}).then(
       () => {
         console.log(`Connected to Mongo server`);
       },

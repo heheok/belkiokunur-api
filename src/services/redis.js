@@ -11,3 +11,4 @@ client.on('connect', function() {
 
 export const redisGetAsync = promisify(client.get).bind(client);
 export const redisSetAsync = promisify(client.set).bind(client);
+export const redisDelAsync = promisify(client.del).bind(client);
