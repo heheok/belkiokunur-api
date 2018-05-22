@@ -17,9 +17,11 @@ import {
   getArticle,
   createArticle,
   updateArticle,
-  removeArticle
+  removeArticle,
+  listArticleByGenre,
+  listArticleByAuthor
 } from '../controllers/article';
-import { login, logout } from '../controllers/authentication';
+import { login, logout, checkLogin } from '../controllers/authentication';
 
 const Routes = {
   publicRoutes: {
@@ -65,9 +67,25 @@ const Routes = {
       method: 'GET',
       path: '/article/{slug}',
       handler: getArticle
+    },
+    articlesByGenre: {
+      method: 'GET',
+      path: '/articles-in/{slug}',
+      handler: listArticleByGenre
+    },
+    articlesByAuthor: {
+      method: 'GET',
+      path: '/articles-by/{username}',
+      handler: listArticleByAuthor
     }
   },
   privateRoutes: {
+    // AUTH RELATED
+    checkLogin: {
+      method: 'GET',
+      path: '/check',
+      handler: checkLogin
+    },
     logout: {
       method: 'GET',
       path: '/logout',

@@ -4,15 +4,15 @@ export const SuccessResponse = (
   statusCode = 200
 ) => {
   return {
-    status: statusCode,
+    statusCode: statusCode,
     message: message,
-    data: payload
+    payload: payload
   };
 };
 
 export const ErrorResponse = (errorMessage, statusCode = 500) => {
   return {
-    status: statusCode,
+    statusCode: statusCode,
     error: errorMessage
   };
 };

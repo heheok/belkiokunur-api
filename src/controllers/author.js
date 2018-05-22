@@ -32,7 +32,10 @@ export const getAuthor = (req, h) => {
           _id: author._id,
           username: author.username,
           fullname: author.fullname,
-          summary: author.summary
+          summary: author.summary,
+          since: author.since,
+          followerCount: author.followerCount,
+          followingCount: author.followingCount
         }
       });
     })

@@ -1,16 +1,114 @@
 import slug from 'slug';
-import Article from '../models/article';
-import { SuccessResponse, ErrorResponse } from '../handlers/reponseHandler';
 import JWT from 'jsonwebtoken';
+import Article from '../models/article';
+import Genre from '../models/genre';
+import Author from '../models/author';
+import { SuccessResponse, ErrorResponse } from '../handlers/reponseHandler';
+
 import { JWT_SECRET } from '../config/config';
 
 export const listArticle = (req, h) => {
   return Article.find({})
+    .populate('author')
+    .populate('genre')
     .exec()
-    .then(articles => {
-      return SuccessResponse({
-        articles
-      });
+    .then(unsafeArticles => {
+      const articles = unsafeArticles.map(article => ({
+        title: article.title,
+        slug: article.slug,
+        text: article.text,
+        author: {
+          username: article.author.username,
+          fullname: article.author.fullname,
+          since: article.author.since,
+          followerCount: article.author.followerCount,
+          followingCount: article.author.followingCount
+        },
+        genre: {
+          slug: article.genre.slug,
+          name: article.genre.name
+        },
+        date: article.date
+      }));
+      return SuccessResponse({ articles: articles });
+    })
+    .catch(err => {
+      return ErrorResponse(err, 500);
+    });
+};
+export const listArticleByGenre = async (req, h) => {
+  const genreId = await Genre.findOne({ slug: req.params.slug })
+    .exec()
+    .then(genre => {
+      if (!genre) return ErrorResponse('No articles in genre', 404);
+      return genre.id;
+    })
+    .catch(err => {
+      return ErrorResponse(err, 500);
+    });
+
+  return Article.find({ genre: genreId })
+    .populate('author')
+    .populate('genre')
+    .exec()
+    .then(unsafeArticles => {
+      const articles = unsafeArticles.map(article => ({
+        title: article.title,
+        slug: article.slug,
+        text: article.text,
+        author: {
+          username: article.author.username,
+          fullname: article.author.fullname,
+          since: article.author.since,
+          followerCount: article.author.followerCount,
+          followingCount: article.author.followingCount
+        },
+        genre: {
+          slug: article.genre.slug,
+          name: article.genre.name
+        },
+        date: article.date
+      }));
+      return SuccessResponse({ articles: articles });
+    })
+    .catch(err => {
+      return ErrorResponse(err, 500);
+    });
+};
+export const listArticleByAuthor = async (req, h) => {
+  const authorId = await Author.findOne({ username: req.params.username })
+    .exec()
+    .then(author => {
+      if (!author) return ErrorResponse('No articles by author', 404);
+      return author.id;
+    })
+    .catch(err => {
+      return ErrorResponse(err, 500);
+    });
+
+  return Article.find({ author: authorId })
+    .populate('author')
+    .populate('genre')
+    .exec()
+    .then(unsafeArticles => {
+      const articles = unsafeArticles.map(article => ({
+        title: article.title,
+        slug: article.slug,
+        text: article.text,
+        author: {
+          username: article.author.username,
+          fullname: article.author.fullname,
+          since: article.author.since,
+          followerCount: article.author.followerCount,
+          followingCount: article.author.followingCount
+        },
+        genre: {
+          slug: article.genre.slug,
+          name: article.genre.name
+        },
+        date: article.date
+      }));
+      return SuccessResponse({ articles: articles });
     })
     .catch(err => {
       return ErrorResponse(err, 500);
@@ -18,25 +116,46 @@ export const listArticle = (req, h) => {
 };
 export const getArticle = (req, h) => {
   return Article.findOne({ slug: req.params.slug })
+    .populate('author')
+    .populate('genre')
     .exec()
-    .then(article => {
-      if (!article) return ErrorResponse('Article not found', 404);
-      return SuccessResponse(article);
+    .then(unsafeArticle => {
+      if (!unsafeArticle) return ErrorResponse('Article not found', 404);
+
+      return SuccessResponse({
+        article: {
+          title: unsafeArticle.title,
+          slug: unsafeArticle.slug,
+          text: unsafeArticle.text,
+          author: {
+            username: unsafeArticle.author.username,
+            fullname: unsafeArticle.author.fullname,
+            since: unsafeArticle.author.since,
+            followerCount: unsafeArticle.author.followerCount,
+            followingCount: unsafeArticle.author.followingCount
+          },
+          genre: {
+            slug: unsafeArticle.genre.slug,
+            name: unsafeArticle.genre.name
+          },
+          date: unsafeArticle.date
+        }
+      });
     })
     .catch(err => {
-      return ErrorResponse('Article not found', 404);
+      return ErrorResponse(err, 404);
     });
 };
 
 export const createArticle = (req, h) => {
-  const { username } = JWT.verify(req.auth.token, JWT_SECRET);
+  const { id } = JWT.verify(req.auth.token, JWT_SECRET);
 
   const articleData = {
     title: req.payload.title,
     slug: slug(req.payload.title, { symbols: false, lower: true }),
     text: req.payload.text,
-    author: username,
-    genre: 'hikaye',
+    author: id,
+    genre: req.payload.genre,
     date: req.payload.date,
     isPublished: false
   };

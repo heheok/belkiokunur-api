@@ -6,7 +6,8 @@ import Routes from './src/config/routing';
 
 const server = new Hapi.Server({
   host: 'localhost',
-  port: '8081'
+  port: '8081',
+  routes: { cors: true }
 });
 
 const validate = async function(decodedToken, request) {

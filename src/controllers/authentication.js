@@ -46,3 +46,12 @@ export const logout = (req, h) => {
     return ErrorResponse('You do not have access to see this page', 403);
   }
 };
+
+export const checkLogin = (req, h) => {
+  try {
+    const { id, username } = JWT.verify(req.auth.token, JWT_SECRET);
+    return SuccessResponse({ verifiedUser: username }, 'ok', 200);
+  } catch (err) {
+    return ErrorResponse('You do not have access to see this page', 1403);
+  }
+};

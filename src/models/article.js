@@ -8,8 +8,8 @@ const articleModel = new Schema({
   title: { type: String, required: true },
   slug: { type: String, required: true, index: { unique: true } },
   text: { type: String, required: true },
-  author: { type: String, required: true },
-  genre: { type: String, required: true },
+  author: { type: Schema.Types.ObjectId, ref: 'Author' },
+  genre: { type: Schema.Types.ObjectId, ref: 'Genre' },
   date: { type: Date, required: true },
   isPublished: { type: Boolean, required: true }
 });
